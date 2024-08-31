@@ -3,6 +3,7 @@
 import  fs from 'fs';
 import { promisify } from 'util';
 import { parseStringPromise } from 'xml2js';
+import { IotRequest } from './models.iot';
 
 // const coneccion_bd = new Pool(Configuration.database);
 const readFile = promisify(fs.readFile);
@@ -48,6 +49,46 @@ export class IotService {
         return null;
     }
 
-    async getIot(): Promise<any> {
+
+    findEntityByPath(jsonData: any, path: string): any {
+        const levels = path.split('/');
+        const lastLevel = levels[levels.length - 1];
+        const entityType = lastLevel.split(':')[0];
+        return this.findEntityWithPath(jsonData, entityType);
     }
+
+    async getIotServices(jsonData: any, iot: IotRequest): Promise<IotRequest> {
+        const iot_services = iot.mdns_services;
+        const iotServices:IotRequest = {
+            mdns_services: [],
+            uid: 0,
+            last_location: iot.last_location,
+            timestamp: ''
+        };
+        for (const service of iot_services) {
+            const route = service.txtProperties.location;
+            const type = service.txtProperties.type;
+            const entity = this.findEntityByPath(jsonData, route);
+            if (entity && entity.path === route) {
+                const computingNodes = entity.entity['containsComputingNode'] || [];
+                for (const node of computingNodes) {
+                    if (node['$'] && node['$'].name === type) {
+                        iotServices.mdns_services.push({
+                            hashId: service.hashId,
+                            address: service.address,
+                            serviceType: service.serviceType,
+                            port: service.port,
+                            mdnsName: service.mdnsName,
+                            txtProperties: service.txtProperties,
+                            isSynced: true
+                        });
+                    }
+                }
+            }
+        }
+
+        return iotServices;
+
+    }
+
 }

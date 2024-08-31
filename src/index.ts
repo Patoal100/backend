@@ -3,12 +3,14 @@ import https from 'https';
 import fs from 'fs';
 import { LOGIN_API } from './authentication/login.js';
 import { Configuration } from './config/parametros.js';
+import { IOT_API} from './iot/iot.js';
 
 const app = express();
 const PORT = process.env.PORT || Configuration.node.port;
 app.use(express.json());
 
 app.use(LOGIN_API);
+app.use(IOT_API)
 
 if (Configuration.https.enabled) {
 
