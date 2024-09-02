@@ -23,11 +23,29 @@ export class LoginService {
     private correoService: CorreoService = new CorreoService();
 
 
+    async validateToken(token: string): Promise<any> {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const result = await coneccion_bd.query('SELECT * FROM user_tokens WHERE token = $1', [token]);
+
+                if (result.rows.length === 0) {
+                    return reject({ error: 'Token inválido' });
+                }
+                const decoded: any = jwt.verify(token, Configuration.codigo);
+
+                resolve(decoded);
+            } catch (error) {
+                await coneccion_bd.query('DELETE FROM user_tokens WHERE token = $1', [token]);
+                reject({ error: 'Token inválido' });
+            }
+        });
+    }
+
     async login(login: string, password: string): Promise<any> {
         return new Promise(async (resolve, reject) => {
         try {
             const query = {
-            text: 'SELECT * FROM public.usuario WHERE login = $1',
+            text: 'SELECT * FROM public.users WHERE login = $1',
             values: [login]
             };
             const result = await coneccion_bd.query(query);
@@ -45,6 +63,12 @@ export class LoginService {
 
             // Generar el token
             const token = jwt.sign({ email: user.login }, Configuration.codigo, { expiresIn: '1h' });
+
+            const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+            await coneccion_bd.query(
+                'INSERT INTO user_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)',
+                [user.id, token, expiresAt]
+            );
 
             resolve({ ok: true, user, token });
         } catch (error) {
@@ -66,7 +90,7 @@ export class LoginService {
                 const hashedPassword = await bcrypt.hash(user.password, salt);
 
                 const query = {
-                    text: 'INSERT INTO public.usuario (login, password, name, last_name, role, disability) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+                    text: 'INSERT INTO public.users (login, password, name, last_name, role, disability) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
                     values: [user.login, hashedPassword, user.name, user.last_name, user.role, user.disability]
                 };
                 const result = await coneccion_bd.query(query);

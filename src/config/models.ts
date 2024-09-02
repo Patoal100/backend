@@ -6,6 +6,7 @@ export interface Entidad{
     email: EMAIL_CONFIG;
     node: NODE_CONFIG;
     codigo: string;
+    model_path: string;
 }
 
 export interface HTTPS_CONFIG{

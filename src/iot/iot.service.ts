@@ -1,11 +1,11 @@
-// import { Pool } from 'pg';
-// import { Configuration } from '../config/parametros';
+import { Pool } from 'pg';
+import { Configuration } from '../config/parametros';
 import  fs from 'fs';
 import { promisify } from 'util';
 import { parseStringPromise } from 'xml2js';
-import { IotRequest } from './models.iot';
+import { IotRequest, MdnsService } from './models.iot';
 
-// const coneccion_bd = new Pool(Configuration.database);
+const coneccion_bd = new Pool(Configuration.database);
 const readFile = promisify(fs.readFile);
 
 export class IotService {
@@ -73,22 +73,63 @@ export class IotService {
                 const computingNodes = entity.entity['containsComputingNode'] || [];
                 for (const node of computingNodes) {
                     if (node['$'] && node['$'].name === type) {
-                        iotServices.mdns_services.push({
-                            hashId: service.hashId,
-                            address: service.address,
-                            serviceType: service.serviceType,
-                            port: service.port,
-                            mdnsName: service.mdnsName,
-                            txtProperties: service.txtProperties,
-                            isSynced: true
+                        // Insertar en la base de datos
+                        const query = {
+                            text: `
+                                INSERT INTO mdns_services (hash_id, address, service_type, port, mdns_name, location, type)
+                                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                                ON CONFLICT (hash_id) DO NOTHING
+                            `,
+                            values: [
+                                service.hashId,
+                                service.address,
+                                service.serviceType,
+                                service.port,
+                                service.mdnsName,
+                                service.txtProperties.location,
+                                service.txtProperties.type
+                            ]
+                        };
+                        coneccion_bd.query(query).then(() => {
+                            console.log('Se agrego el servicio con id : ',service.hashId);
+                        }).catch((error) => {
+                            console.log('Error al insertar en la base de datos: ' + error.message);
                         });
                     }
                 }
             }
         }
 
+        iotServices.mdns_services = await this.getIotServicesByLocation(iot.last_location);
         return iotServices;
 
     }
+
+async getIotServicesByLocation(location: string): Promise<MdnsService[]> {
+    const query = {
+        text: 'SELECT * FROM mdns_services WHERE location = $1',
+        values: [location]
+    };
+
+    try {
+        const result = await coneccion_bd.query(query);
+        const mdnsServices: MdnsService[] = result.rows.map((row: any) => ({
+            hashId: row.hash_id,
+            address: row.address,
+            serviceType: row.service_type,
+            port: row.port,
+            mdnsName: row.mdns_name,
+            txtProperties: {
+                location: row.location,
+                type: row.type
+            },
+            isSynced: true
+        }));
+        return mdnsServices;
+    } catch (error) {
+        console.error('Error al obtener los servicios MDNS:', error);
+        throw error;
+    }
+}
 
 }

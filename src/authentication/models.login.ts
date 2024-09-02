@@ -1,4 +1,5 @@
 export interface USERI{
+    id: number;
     name: string;
     last_name: string;
     login: string;

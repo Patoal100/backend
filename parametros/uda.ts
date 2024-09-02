@@ -27,6 +27,7 @@ const BackendParametros: Entidad = {
         port: 3000
     },
     codigo: 'clave_segura',
+    model_path: '/home/pato/Tesis/backend/ModeloP.MonitorIoT'
 }
 
 export {
