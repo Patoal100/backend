@@ -1,6 +1,7 @@
 export interface TxtProperties {
     location: string;
     type: string;
+    services?: SensorInfo[];
 }
 
 export interface MdnsService {
@@ -18,4 +19,11 @@ export interface IotRequest {
     uid: number;
     last_location: string;
     timestamp: string;
+}
+
+export interface SensorInfo {
+    apiService?: string;
+    actuatorNode?: string;
+    property?: string;
+    sensorNode?: string;
 }
