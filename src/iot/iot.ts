@@ -49,6 +49,15 @@ IOT_API.post('/service/client_services', async (req, res) => {
     }
 });
 
+IOT_API.get('/api/hierarchy', async (req, res) => {
+    try{
+        const hierarchy = await iotService.getHierarchy();
+        res.status(200).json(hierarchy);
+    }catch(error){
+        res.status(500).send({ error: error.message });
+    }
+});
+
 export {
     IOT_API
 }

@@ -212,4 +212,47 @@ async getIotServicesByLocation(location: string): Promise<MdnsService[]> {
     }
 }
 
+async getHierarchy(): Promise<any> {
+    const query = {
+        text: 'SELECT * FROM hierarchy'
+    };
+
+    try {
+        const result = await coneccion_bd.query(query);
+        const rows = result.rows;
+
+        // Construir la jerarquía
+        const hierarchy = this.buildHierarchy(rows);
+
+        return hierarchy;
+    } catch (error) {
+        console.error('Error al obtener la jerarquía:', error);
+        throw error;
+    }
+}
+
+buildHierarchy(rows: any[]): any {
+    const map = new Map<number, any>();
+
+    // Crear un mapa de nodos
+    rows.forEach(row => {
+        map.set(row.id, { id: row.id, entity: row.entity ,name: row.name, childs: [] });
+    });
+
+    let root = null;
+
+    // Construir la jerarquía
+    rows.forEach(row => {
+        const node = map.get(row.id);
+        if (row.parent_id) {
+            const parent = map.get(row.parent_id);
+            parent.childs.push(node);
+        } else {
+            root = node;
+        }
+    });
+
+    return root;
+}
+
 }
