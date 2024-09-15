@@ -213,16 +213,16 @@ async getIotServicesByLocation(location: string): Promise<MdnsService[]> {
 }
 
 async getHierarchy(): Promise<any> {
-    const query = {
-        text: 'SELECT * FROM hierarchy'
+    const mdnsServicesQuery = {
+        text: 'SELECT * FROM mdns_services'
     };
 
     try {
-        const result = await coneccion_bd.query(query);
-        const rows = result.rows;
+        const mdnsServicesResult = await coneccion_bd.query(mdnsServicesQuery);
+        const mdnsServicesRows = mdnsServicesResult.rows;
 
         // Construir la jerarquía
-        const hierarchy = this.buildHierarchy(rows);
+        const hierarchy = await this.buildHierarchy(mdnsServicesRows);
 
         return hierarchy;
     } catch (error) {
@@ -231,28 +231,129 @@ async getHierarchy(): Promise<any> {
     }
 }
 
-buildHierarchy(rows: any[]): any {
-    const map = new Map<number, any>();
+async buildHierarchy(mdnsServicesRows: any[]): Promise<any> {
+    const root = { id: 'root', entity: 'root', name: 'root', childs: [], services: [] };
+    const map = new Map<string, any>();
 
-    // Crear un mapa de nodos
-    rows.forEach(row => {
-        map.set(row.id, { id: row.id, entity: row.entity ,name: row.name, childs: [] });
-    });
+    // Add mdns_services to the hierarchy
+    for (const row of mdnsServicesRows) {
+        const locationParts = row.location.split('/');
+        let currentNode = root;
 
-    let root = null;
+        // Traverse the location path and build the hierarchy dynamically
+        locationParts.forEach(part => {
+            const [entity, name] = part.split(':');
+            const key = `${entity}:${name}`;
+            let childNode = map.get(key);
 
-    // Construir la jerarquía
-    rows.forEach(row => {
-        const node = map.get(row.id);
-        if (row.parent_id) {
-            const parent = map.get(row.parent_id);
-            parent.childs.push(node);
-        } else {
-            root = node;
+            if (!childNode) {
+                childNode = { id: key, entity, name, childs: [], services: [] };
+                map.set(key, childNode);
+                currentNode.childs.push(childNode);
+            }
+
+            currentNode = childNode;
+        });
+
+        const sensorInfo = await this.getSensorInfo(Configuration.model_path, row.type);
+        currentNode.services = currentNode.services || [];
+        currentNode.services.push({
+            id: row.hash_id,
+            address: row.address,
+            port: row.port,
+            type: row.type,
+            service: sensorInfo.apiService,
+        });
+    }
+
+    // Now, let's dynamically place the "Servidor" node based on its location
+    const servidorLocationParts = ['CAMPUS:Campus Universidad del Azuay', 'Edificio: Administracion', 'Piso:3'];
+    let servidorNode = root;
+
+    // Traverse the location to find the correct place for "Servidor"
+    servidorLocationParts.forEach(part => {
+        const [entity, name] = part.split(':');
+        const key = `${entity}:${name}`;
+        let childNode = map.get(key);
+
+        if (!childNode) {
+            childNode = { id: key, entity, name, childs: [], services: [] };
+            map.set(key, childNode);
+            servidorNode.childs.push(childNode);
         }
+
+        servidorNode = childNode;
     });
 
-    return root;
+    // Fetch services dynamically from the XML file for "Servidor"
+    const servidorServices = await this.getServicesForNode('Servidor', Configuration.model_path);
+
+    // Add "Servidor" node under the correct location and assign its services
+    let servidorChildNode = map.get('Servidor:Servidor');
+    if (!servidorChildNode) {
+        servidorChildNode = {
+            id: 'Servidor:Servidor',
+            entity: 'Servidor',
+            name: 'AplicacionAcademica',
+            childs: [],
+            services: []
+        };
+        servidorNode.childs.push(servidorChildNode);
+        map.set('Servidor:Servidor', servidorChildNode);
+    }
+
+    // Add dynamically fetched services under the "Servidor" node
+    servidorServices.forEach(service => {
+        servidorChildNode.services.push({
+            id: service.id,
+            service: service.name,
+            address: Configuration.appConection.hostname,
+            port: Configuration.appConection.port
+        });
+    });
+
+    // Return the hierarchy starting from the root
+    return root.childs.length > 0 ? root.childs[0] : null;
+}
+
+
+async getServicesForNode(nodeName: string, xmlFilePath: string): Promise<any[]> {
+    try {
+        // Read and parse the XML file
+        const xmlData = await readFile(xmlFilePath, 'utf-8');
+        const jsonData = await parseStringPromise(xmlData);
+
+        const services: any[] = [];
+
+        // Assuming the node you're looking for is part of "containsResource" or "containsComputingNode"
+        const entities = jsonData['MonitorIoT:MonitoringArchitectureModel']['containsEntity'] || [];
+
+        // Find the node and its services
+        for (const entity of entities) {
+            if (entity.containsComputingNode && entity.containsComputingNode.some((node: any) => node.$.name === nodeName)) {
+                // Extract services within the node
+                const computingNode = entity.containsComputingNode.find((node: any) => node.$.name === nodeName);
+                const resourceServices = computingNode.containsResource || [];
+
+                // Collect all services in the node
+                resourceServices.forEach((resource: any) => {
+                    if (resource.containsService) {
+                        resource.containsService.forEach((service: any) => {
+                            services.push({
+                                id: service.$.id,
+                                name: service.$.name
+                            });
+                        });
+                    }
+                });
+            }
+        }
+
+        return services;
+    } catch (error) {
+        console.error('Error fetching services from XML:', error);
+        throw error;
+    }
 }
 
 }

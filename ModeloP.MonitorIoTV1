@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="ASCII"?>
+<MonitorIoT:MonitoringArchitectureModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:MonitorIoT="http://www.uazuay.edu.ec/MonitorIoT" name="Modelo de arquitectura de monitoreo del sistema de gesti&#xf3;n de emergencias" description="Modelo de arquitectura multicapa del sistema de gesti&#xf3;n de emergencias y sus subsistema que soporta los procesos de monitoreo, a nivel de las capas Edge, Fog y Cloud." author="Lenin Erazo Garzon">
+  <containsEntity xsi:type="MonitorIoT:PhysicalEntity" id="1" name="CAMPUS" description="">
+    <hasProperty id="1" name="Nombre" value="Campus Universidad del Azuay"/>
+    <containsComputingNode xsi:type="MonitorIoT:CloudNode" id="1" name="Servidor">
+      <containsResource xsi:type="MonitorIoT:Middleware" id="1" name="AplicacionAcademica" resourcesPartOf="//@self_adaptionmodel.0/@containsAction.4">
+        <containsService id="1" name="RegistrarAsistencia" resourcesPartOf="//@self_adaptionmodel.0/@containsAction.3" hasLinkAppToService="//@containsLink.15"/>
+        <containsService id="2" name="ListarEtudiantes_Asistencia" hasLinkAppToService="//@containsLink.16"/>
+        <containsService id="3" name="VisualizarRecursosDidacticosClase" resourcesPartOf="//@self_adaptionmodel.0/@containsAction.2" hasLinkAppToService="//@containsLink.14"/>
+        <containsService id="4" name="ConsultarHorarios/Aulas" hasLinkAppToService="//@containsLink.13"/>
+      </containsResource>
+    </containsComputingNode>
+    <containsSubPhysicalEntity id="1" name="Edificio">
+      <hasProperty id="1" name="Nombre" value="Edificio (Ejemplo: Facultad de Administracion)"/>
+      <containsSubPhysicalEntity id="1" name="Piso" description="5">
+        <hasProperty id="1" name="Numero"/>
+        <containsComputingNode xsi:type="MonitorIoT:IoTGateway" id="1" name="Micro-Controlador">
+          <containsResource xsi:type="MonitorIoT:API" id="1" name="DetectarHumo" hasLinkAppToAPI="//@containsLink.8" hasLinkAPIToIoTDevice="//@containsLink.3 //@containsLink.12"/>
+          <containsResource xsi:type="MonitorIoT:API" id="2" name="On/OffProyector" resourcesPartOf="//@self_adaptionmodel.0/@containsAction.1" hasLinkAppToAPI="//@containsLink.7" hasLinkAPIToIoTDevice="//@containsLink.2"/>
+          <containsResource xsi:type="MonitorIoT:API" id="3" name="DetectarMovimiento" resourcesPartOf="//@self_adaptionmodel.0/@containsAction.0" hasLinkAppToAPI="//@containsLink.9" hasLinkAPIToIoTDevice="//@containsLink.4 //@containsLink.10"/>
+          <containsResource xsi:type="MonitorIoT:API" id="4" name="On/OffLuces" resourcesPartOf="//@self_adaptionmodel.0/@containsAction.0" hasLinkAppToAPI="//@containsLink.6" hasLinkAPIToIoTDevice="//@containsLink.5 //@containsLink.11"/>
+          <containsResource xsi:type="MonitorIoT:Application" id="5" name="Controlador" resourcesPartOf="//@self_adaptionmodel.0/@containsAction.0 //@self_adaptionmodel.0/@containsAction.1 //@self_adaptionmodel.0/@containsAction.3" hasLinkAppToAPI="//@containsLink.6 //@containsLink.7 //@containsLink.8 //@containsLink.9"/>
+        </containsComputingNode>
+        <containsSubPhysicalEntity id="1" name="Aula" entityHasCondition1="//@self_adaptionmodel.0/@containsRules.1/@rulesHaveConditions.0 //@self_adaptionmodel.0/@containsRules.2/@rulesHaveConditions.0 //@self_adaptionmodel.0/@containsRules.3/@rulesHaveConditions.1">
+          <hasProperty id="1" name="Numero" value=""/>
+          <containsComputingNode xsi:type="MonitorIoT:IoTGateway" id="1" name="PC">
+            <containsResource xsi:type="MonitorIoT:Application" id="1" name="Academico" hasLinkAppToService="//@containsLink.14"/>
+          </containsComputingNode>
+          <containsComputingNode xsi:type="MonitorIoT:Sensor" id="2" name="Beacon" hasLinkAPIToIoTDevice="//@containsLink.0">
+            <hasProperty id="1" name="Id"/>
+            <hasProperty id="2" name="Ubicacion"/>
+          </containsComputingNode>
+          <containsComputingNode xsi:type="MonitorIoT:Actuator" id="3" name="Proyector" hasLinkAPIToIoTDevice="//@containsLink.2">
+            <hasProperty id="1" name="Id"/>
+            <hasProperty id="2" name="EstadoProyector" propertyHasCondition="//@self_adaptionmodel.0/@containsRules.1/@rulesHaveConditions.1"/>
+          </containsComputingNode>
+          <containsComputingNode xsi:type="MonitorIoT:Actuator" id="4" name="Humo" hasLinkAPIToIoTDevice="//@containsLink.3">
+            <hasProperty id="1" name="Id"/>
+            <hasProperty id="2" name="EstadoHumo"/>
+          </containsComputingNode>
+          <containsComputingNode xsi:type="MonitorIoT:Sensor" id="5" name="Movimiento" hasLinkAPIToIoTDevice="//@containsLink.4">
+            <hasProperty id="1" name="Id"/>
+            <hasProperty id="2" name="EstadoMovimiento"/>
+          </containsComputingNode>
+          <containsComputingNode xsi:type="MonitorIoT:Actuator" id="6" name="Luces" hasLinkAPIToIoTDevice="//@containsLink.5">
+            <hasProperty id="1" name="Id"/>
+            <hasProperty id="2" name="EstadoLuces"/>
+          </containsComputingNode>
+          <containsSubPhysicalEntity xsi:type="MonitorIoT:HumanUser" id="1" name="Persona" entityHasCondition1="//@self_adaptionmodel.0/@containsRules.4/@rulesHaveConditions.2" entityHasCondition2="//@self_adaptionmodel.0/@containsRules.1/@rulesHaveConditions.0 //@self_adaptionmodel.0/@containsRules.2/@rulesHaveConditions.0 //@self_adaptionmodel.0/@containsRules.3/@rulesHaveConditions.1">
+            <hasProperty id="1" name="Rol" propertyHasCondition="//@self_adaptionmodel.0/@containsRules.3/@rulesHaveConditions.0 //@self_adaptionmodel.0/@containsRules.4/@rulesHaveConditions.0"/>
+            <hasProperty id="2" name="CapacidadDiferente" propertyHasCondition="//@self_adaptionmodel.0/@containsRules.4/@rulesHaveConditions.1"/>
+            <containsComputingNode xsi:type="MonitorIoT:IoTGateway" id="1" name="SmartPhone">
+              <containsResource xsi:type="MonitorIoT:Application" id="1" name="Academico" entityHasCondition2="//@self_adaptionmodel.0/@containsRules.4/@rulesHaveConditions.2" resourcesPartOf="//@self_adaptionmodel.0/@containsAction.2 //@self_adaptionmodel.0/@containsAction.4" hasLinkAppToService="//@containsLink.15 //@containsLink.16" hasLinkAppToAPI="//@containsLink.1"/>
+              <containsResource xsi:type="MonitorIoT:API" id="2" name="ObtenerInfoBeacon" resourcesPartOf="//@self_adaptionmodel.0/@containsAction.3" hasLinkAppToAPI="//@containsLink.1" hasLinkAPIToIoTDevice="//@containsLink.0"/>
+            </containsComputingNode>
+          </containsSubPhysicalEntity>
+        </containsSubPhysicalEntity>
+        <containsSubPhysicalEntity id="2" name="Pasillo">
+          <containsComputingNode xsi:type="MonitorIoT:Sensor" id="1" name="Humo" hasLinkAPIToIoTDevice="//@containsLink.12">
+            <hasProperty id="1" name="Id"/>
+            <hasProperty id="2" name="EstadoHumo"/>
+          </containsComputingNode>
+          <containsComputingNode xsi:type="MonitorIoT:Sensor" id="2" name="Movimiento" hasLinkAPIToIoTDevice="//@containsLink.10">
+            <hasProperty id="1" name="Id"/>
+            <hasProperty id="2" name="EstadoMovimiento" propertyHasCondition="//@self_adaptionmodel.0/@containsRules.0/@rulesHaveConditions.0"/>
+          </containsComputingNode>
+          <containsComputingNode xsi:type="MonitorIoT:Actuator" id="3" name="Luces" hasLinkAPIToIoTDevice="//@containsLink.11">
+            <hasProperty id="1" name="Id"/>
+            <hasProperty id="2" name="EstadoLuces" propertyHasCondition="//@self_adaptionmodel.0/@containsRules.0/@rulesHaveConditions.1"/>
+          </containsComputingNode>
+          <containsSubPhysicalEntity xsi:type="MonitorIoT:HumanUser" id="1" name="PersonaIdentica" Identic="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0">
+            <hasProperty id="1" name="Rol" propertyHasCondition="//@self_adaptionmodel.0/@containsRules.2/@rulesHaveConditions.1"/>
+            <hasProperty id="2" name="CapacidadDiferente"/>
+            <containsComputingNode xsi:type="MonitorIoT:IoTGateway" id="1" name="new IoTGateway 1">
+              <containsResource xsi:type="MonitorIoT:Application" id="1" name="Academico" hasLinkAppToService="//@containsLink.13"/>
+            </containsComputingNode>
+          </containsSubPhysicalEntity>
+        </containsSubPhysicalEntity>
+      </containsSubPhysicalEntity>
+    </containsSubPhysicalEntity>
+  </containsEntity>
+  <containsLink xsi:type="MonitorIoT:LinkAPIToIoTDevice" linksIoTDevice="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.1" linksAPI="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.1"/>
+  <containsLink xsi:type="MonitorIoT:LinkAppToAPI" linksAPI="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.1" linksApp="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.0"/>
+  <containsLink xsi:type="MonitorIoT:LinkAPIToIoTDevice" linksIoTDevice="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.2" linksAPI="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.1"/>
+  <containsLink xsi:type="MonitorIoT:LinkAPIToIoTDevice" linksIoTDevice="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.3" linksAPI="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.0"/>
+  <containsLink xsi:type="MonitorIoT:LinkAPIToIoTDevice" linksIoTDevice="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.4" linksAPI="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.2"/>
+  <containsLink xsi:type="MonitorIoT:LinkAPIToIoTDevice" linksIoTDevice="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.5" linksAPI="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.3"/>
+  <containsLink xsi:type="MonitorIoT:LinkAppToAPI" linksAPI="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.3" linksApp="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.4"/>
+  <containsLink xsi:type="MonitorIoT:LinkAppToAPI" linksAPI="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.1" linksApp="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.4"/>
+  <containsLink xsi:type="MonitorIoT:LinkAppToAPI" linksAPI="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.0" linksApp="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.4"/>
+  <containsLink xsi:type="MonitorIoT:LinkAppToAPI" linksAPI="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.2" linksApp="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.4"/>
+  <containsLink xsi:type="MonitorIoT:LinkAPIToIoTDevice" linksIoTDevice="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.1/@containsComputingNode.1" linksAPI="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.2"/>
+  <containsLink xsi:type="MonitorIoT:LinkAPIToIoTDevice" linksIoTDevice="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.1/@containsComputingNode.2" linksAPI="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.3"/>
+  <containsLink xsi:type="MonitorIoT:LinkAPIToIoTDevice" linksIoTDevice="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.1/@containsComputingNode.0" linksAPI="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.0"/>
+  <containsLink xsi:type="MonitorIoT:LinkAppToService" linksApp="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.1/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.0" linksService="//@containsEntity.0/@containsComputingNode.0/@containsResource.0/@containsService.3"/>
+  <containsLink xsi:type="MonitorIoT:LinkAppToService" linksApp="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.0" linksService="//@containsEntity.0/@containsComputingNode.0/@containsResource.0/@containsService.2"/>
+  <containsLink xsi:type="MonitorIoT:LinkAppToService" linksApp="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.0" linksService="//@containsEntity.0/@containsComputingNode.0/@containsResource.0/@containsService.0"/>
+  <containsLink xsi:type="MonitorIoT:LinkAppToService" linksApp="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.0" linksService="//@containsEntity.0/@containsComputingNode.0/@containsResource.0/@containsService.1"/>
+  <self_adaptionmodel name="new ContainerRules1">
+    <containsRules id="1" name="Movimiento" hasLinkActionToRules="//@self_adaptionmodel.0/@containsLinkConection.0">
+      <rulesHaveConditions xsi:type="MonitorIoT:PropertyCondition" value="True" belongsProperty="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.1/@containsComputingNode.1/@hasProperty.1" OperatorProperty="Equal_to"/>
+      <rulesHaveConditions xsi:type="MonitorIoT:PropertyCondition" value="Off" belongsProperty="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.1/@containsComputingNode.2/@hasProperty.1" OperatorProperty="Equal_to"/>
+    </containsRules>
+    <containsRules id="2" name="Proyector" description="" hasLinkActionToRules="//@self_adaptionmodel.0/@containsLinkConection.1">
+      <rulesHaveConditions xsi:type="MonitorIoT:EntityCondition" belongsEntity1="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0" belongsEntity2="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0"/>
+      <rulesHaveConditions xsi:type="MonitorIoT:PropertyCondition" Conector="AND" value="Off" belongsProperty="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.2/@hasProperty.1" OperatorProperty="Equal_to"/>
+    </containsRules>
+    <containsRules id="3" name="Profesor" hasLinkActionToRules="//@self_adaptionmodel.0/@containsLinkConection.2">
+      <rulesHaveConditions xsi:type="MonitorIoT:EntityCondition" Conector="AND" belongsEntity1="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0" belongsEntity2="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0"/>
+      <rulesHaveConditions xsi:type="MonitorIoT:PropertyCondition" value="Profesor" belongsProperty="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.1/@containsSubPhysicalEntity.0/@hasProperty.0" OperatorProperty="Equal_to"/>
+    </containsRules>
+    <containsRules id="4" name="Alumno" hasLinkActionToRules="//@self_adaptionmodel.0/@containsLinkConection.4">
+      <rulesHaveConditions xsi:type="MonitorIoT:PropertyCondition" value="Estudiante" belongsProperty="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@hasProperty.0" OperatorProperty="Equal_to"/>
+      <rulesHaveConditions xsi:type="MonitorIoT:EntityCondition" Conector="AND" belongsEntity1="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0" belongsEntity2="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0"/>
+    </containsRules>
+    <containsRules id="5" name="AlumnoDiscapacidadDaltonismo" hasLinkActionToRules="//@self_adaptionmodel.0/@containsLinkConection.3">
+      <rulesHaveConditions xsi:type="MonitorIoT:PropertyCondition" Conector="AND" value="Estudiante" belongsProperty="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@hasProperty.0" OperatorProperty="Equal_to"/>
+      <rulesHaveConditions xsi:type="MonitorIoT:PropertyCondition" value="True" belongsProperty="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@hasProperty.1" OperatorProperty="Equal_to"/>
+      <rulesHaveConditions xsi:type="MonitorIoT:EntityCondition" belongsEntity1="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0" belongsEntity2="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.0" OperatorEntity="Content"/>
+    </containsRules>
+    <containsAction hasLinkActionToRules="//@self_adaptionmodel.0/@containsLinkConection.0" name="Luces" description="Encender Luces" isComposedOfResources="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.2 //@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.3 //@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.4"/>
+    <containsAction hasLinkActionToRules="//@self_adaptionmodel.0/@containsLinkConection.1" name="Proyector" description="Encender Proyector" isComposedOfResources="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.1 //@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.4"/>
+    <containsAction hasLinkActionToRules="//@self_adaptionmodel.0/@containsLinkConection.2" name="Profesor" description="Mostrar Recursos Didacticos" isComposedOfResources="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.0 //@containsEntity.0/@containsComputingNode.0/@containsResource.0/@containsService.2"/>
+    <containsAction hasLinkActionToRules="//@self_adaptionmodel.0/@containsLinkConection.4" name="Estudiante" description="Registrar Asistencia" isComposedOfResources="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.1 //@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.4 //@containsEntity.0/@containsComputingNode.0/@containsResource.0/@containsService.0"/>
+    <containsAction hasLinkActionToRules="//@self_adaptionmodel.0/@containsLinkConection.3" name="AlumnoDifCapacidad" description="Cambiar Colores Interfaz" isComposedOfResources="//@containsEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsSubPhysicalEntity.0/@containsComputingNode.0/@containsResource.0 //@containsEntity.0/@containsComputingNode.0/@containsResource.0"/>
+    <containsLinkConection linkRules="//@self_adaptionmodel.0/@containsRules.0" linksAction="//@self_adaptionmodel.0/@containsAction.0"/>
+    <containsLinkConection linkRules="//@self_adaptionmodel.0/@containsRules.1" linksAction="//@self_adaptionmodel.0/@containsAction.1"/>
+    <containsLinkConection linkRules="//@self_adaptionmodel.0/@containsRules.2" linksAction="//@self_adaptionmodel.0/@containsAction.2"/>
+    <containsLinkConection linkRules="//@self_adaptionmodel.0/@containsRules.4" linksAction="//@self_adaptionmodel.0/@containsAction.4"/>
+    <containsLinkConection linkRules="//@self_adaptionmodel.0/@containsRules.3" linksAction="//@self_adaptionmodel.0/@containsAction.3"/>
+  </self_adaptionmodel>
+</MonitorIoT:MonitoringArchitectureModel>

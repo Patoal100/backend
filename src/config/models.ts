@@ -5,6 +5,7 @@ export interface Entidad{
     database: DATABASE_CONFIG;
     email: EMAIL_CONFIG;
     node: NODE_CONFIG;
+    appConection: APP_CONECTION;
     codigo: string;
     model_path: string;
 }
@@ -32,6 +33,11 @@ export interface EMAIL_CONFIG{
 }
 
 export interface NODE_CONFIG{
+    hostname: string;
+    port: number;
+}
+
+export interface APP_CONECTION{
     hostname: string;
     port: number;
 }

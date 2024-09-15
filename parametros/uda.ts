@@ -26,6 +26,10 @@ const BackendParametros: Entidad = {
         hostname: 'localhost',
         port: 3000
     },
+    appConection: {
+        hostname: 'www.uda.com',
+        port: 8080
+    },
     codigo: 'clave_segura',
     model_path: '/home/pato/Tesis/backend/ModeloP.MonitorIoT'
 }
