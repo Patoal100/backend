@@ -16,7 +16,7 @@ export interface MdnsService {
 
 export interface IotRequest {
     mdns_services: MdnsService[];
-    uid: number;
+    token: string;
     last_location: string;
     timestamp: string;
 }

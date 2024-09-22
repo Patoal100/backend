@@ -4,6 +4,7 @@ import  fs from 'fs';
 import { promisify } from 'util';
 import { parseStringPromise } from 'xml2js';
 import { IotRequest, MdnsService, SensorInfo} from './models.iot';
+import * as crypto from 'crypto';
 
 const coneccion_bd = new Pool(Configuration.database);
 const readFile = promisify(fs.readFile);
@@ -95,17 +96,22 @@ export class IotService {
     async saveHierearchy(route: string): Promise<void> {
         const levels = this.parseRoute(route);
         let parent_id = null;
+        let accumulatedRoute = '';
+
         
         for (const level of levels) {
+            accumulatedRoute += (accumulatedRoute ? '/' : '') + level.entity + ':' + level.name;
+            // Calcular el hash de la variable route
+            const hash = crypto.createHash('sha256').update(accumulatedRoute).digest('hex').substring(0,16);
             const query = {
                 text: `
-                    INSERT INTO hierarchy (entity, name, parent_id)
-                    VALUES ($1, $2, $3)
+                    INSERT INTO hierarchy (entity, name, parent_id, hash)
+                    VALUES ($1, $2, $3, $4)
                     ON CONFLICT (entity, name) DO UPDATE
-                    SET entity = $1, name = $2
+                    SET entity = $1, name = $2, hash = $4
                     RETURNING id
                 `,
-                values: [level.entity, level.name, parent_id]
+                values: [level.entity, level.name, parent_id, hash]
             };
 
             try {
@@ -127,7 +133,7 @@ export class IotService {
         const iot_services = iot.mdns_services;
         const iotServices:IotRequest = {
             mdns_services: [],
-            uid: 0,
+            token: iot.token,
             last_location: iot.last_location,
             timestamp: ''
         };
@@ -135,6 +141,7 @@ export class IotService {
             const route = service.txtProperties.location;
             const type = service.txtProperties.type;
             const entity = this.findEntityByPath(jsonData, route);
+            const hash = crypto.createHash('sha256').update(route).digest('hex').substring(0,16);
             
             const modelRoute = this.transformRoute(route);
 
@@ -146,15 +153,16 @@ export class IotService {
                         // Insertar en la base de datos
                         const query = {
                             text: `
-                                INSERT INTO mdns_services (hash_id, address, service_type, port, mdns_name, location, type)
-                                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                                INSERT INTO mdns_services (hash_id, address, service_type, port, mdns_name, location, type, hash)
+                                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                                 ON CONFLICT (hash_id) DO UPDATE
                                 SET address = EXCLUDED.address,
                                     service_type = EXCLUDED.service_type,
                                     port = EXCLUDED.port,
                                     mdns_name = EXCLUDED.mdns_name,
                                     location = EXCLUDED.location,
-                                    type = EXCLUDED.type
+                                    type = EXCLUDED.type,
+                                    hash = EXCLUDED.hash
                             `,
                             values: [
                                 service.hashId,
@@ -163,7 +171,8 @@ export class IotService {
                                 service.port,
                                 service.mdnsName,
                                 service.txtProperties.location,
-                                service.txtProperties.type
+                                service.txtProperties.type,
+                                hash
                             ]
                         };
                         coneccion_bd.query(query).then(() => {
@@ -183,7 +192,7 @@ export class IotService {
 
 async getIotServicesByLocation(location: string): Promise<MdnsService[]> {
     const query = {
-        text: 'SELECT * FROM mdns_services WHERE location = $1',
+        text: 'SELECT * FROM mdns_services WHERE hash = $1',
         values: [location]
     };
 
@@ -205,6 +214,21 @@ async getIotServicesByLocation(location: string): Promise<MdnsService[]> {
                 isSynced: true
             };
         }));
+        // Fetch services dynamically from the XML file for "Servidor"
+        const servidorServices = await this.getServicesForNode('Servidor', Configuration.model_path);
+        mdnsServices.push(...servidorServices.map((service: any) => ({
+            hashId: service.id,
+            address: Configuration.appConection.hostname,
+            serviceType: 'http',
+            port: Configuration.appConection.port,
+            mdnsName: 'AplicacionAcademica',
+            txtProperties: {
+                location: 'Servidor:Servidor',
+                type: 'Servidor',
+                services: service.name
+            },
+            isSynced: true
+        })));
         return mdnsServices;
     } catch (error) {
         console.error('Error al obtener los servicios MDNS:', error);
@@ -266,8 +290,40 @@ async buildHierarchy(mdnsServicesRows: any[]): Promise<any> {
         });
     }
 
-    // Now, let's dynamically place the "Servidor" node based on its location
-    const servidorLocationParts = ['CAMPUS:Campus Universidad del Azuay', 'Edificio: Administracion', 'Piso:3'];
+    await this.addServidorNode(map, root);
+
+    // Return the hierarchy starting from the root
+    return root.childs.length > 0 ? root.childs[0] : null;
+}
+async getHierarchyPath(): Promise<string[]> {
+    const query = `
+        WITH RECURSIVE hierarchy_path AS (
+            SELECT id, entity, name, parent_id
+            FROM hierarchy
+            WHERE parent_id IS NULL
+            UNION ALL
+            SELECT h.id, h.entity, h.name, h.parent_id
+            FROM hierarchy h
+            INNER JOIN hierarchy_path hp ON hp.id = h.parent_id
+        )
+        SELECT entity, name
+        FROM hierarchy_path
+        ORDER BY id;
+    `;
+
+    try {
+        const result = await coneccion_bd.query(query);
+        const path = result.rows.map(row => `${row.entity}:${row.name}`);
+        return path;
+    } catch (error) {
+        console.error('Error al obtener la jerarquía:', error);
+        throw error;
+    }
+}
+
+async addServidorNode(map: Map<string, any>, root: any) {
+    const hierarchyPath = await this.getHierarchyPath();
+    const servidorLocationParts = hierarchyPath;
     let servidorNode = root;
 
     // Traverse the location to find the correct place for "Servidor"
@@ -277,7 +333,7 @@ async buildHierarchy(mdnsServicesRows: any[]): Promise<any> {
         let childNode = map.get(key);
 
         if (!childNode) {
-            childNode = { id: key, entity, name, childs: [], services: [] };
+            childNode = { id: key, entity, name, childs: [] };
             map.set(key, childNode);
             servidorNode.childs.push(childNode);
         }
@@ -311,9 +367,6 @@ async buildHierarchy(mdnsServicesRows: any[]): Promise<any> {
             port: Configuration.appConection.port
         });
     });
-
-    // Return the hierarchy starting from the root
-    return root.childs.length > 0 ? root.childs[0] : null;
 }
 
 
