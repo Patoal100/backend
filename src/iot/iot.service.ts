@@ -24,7 +24,7 @@ export class IotService {
     }
     
     
-    async getSensorInfo(filePath: string, sensor: string): Promise<SensorInfo> {
+    async getSensorInfo(filePath: string, sensor: string): Promise<SensorInfo[]> {
         try {
             const content = await readFile(filePath, 'utf-8');
             const sensorInfo: SensorInfo = {};
@@ -40,14 +40,12 @@ export class IotService {
                     sensorInfo.apiService = name;
                 } else if (matchedString.includes('xsi:type="MonitorIoT:Actuator"')) {
                     sensorInfo.actuatorNode = name;
-                } else if (matchedString.includes('xsi:type="MonitorIoT:Sensor"')) {
-                    sensorInfo.sensorNode = name;
                 } else if (matchedString.includes('<hasProperty')) {
                     sensorInfo.property = name;
                 }
             }
 
-            return sensorInfo;
+            return [sensorInfo];
         } catch (error) {
             throw new Error('Error al leer el archivo: ' + error.message);
         }
@@ -209,15 +207,23 @@ async getIotServicesByLocation(location: string): Promise<MdnsService[]> {
                 txtProperties: {
                     location: row.location,
                     type: row.type,
-                    services: sensorInfo
                 },
+                services: sensorInfo,
                 isSynced: true
             };
         }));
         // Fetch services dynamically from the XML file for "Servidor"
         const servidorServices = await this.getServicesForNode('Servidor', Configuration.model_path);
-        mdnsServices.push(...servidorServices.map((service: any) => ({
-            hashId: service.id,
+        
+        
+        const servicesInfoList: SensorInfo[] = servidorServices.map(service => ({
+            apiService: service.name,
+            actuadorNode: 'Servidor',
+            property: null
+        }));
+
+        mdnsServices.push({
+            hashId: 'Servidor',
             address: Configuration.appConection.hostname,
             serviceType: 'http',
             port: Configuration.appConection.port,
@@ -225,10 +231,10 @@ async getIotServicesByLocation(location: string): Promise<MdnsService[]> {
             txtProperties: {
                 location: 'Servidor:Servidor',
                 type: 'Servidor',
-                services: service.name
             },
+            services: servicesInfoList,
             isSynced: true
-        })));
+        });
         return mdnsServices;
     } catch (error) {
         console.error('Error al obtener los servicios MDNS:', error);
@@ -286,7 +292,7 @@ async buildHierarchy(mdnsServicesRows: any[]): Promise<any> {
             address: row.address,
             port: row.port,
             type: row.type,
-            service: sensorInfo.apiService,
+            service: sensorInfo,
         });
     }
 

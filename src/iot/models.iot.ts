@@ -1,7 +1,6 @@
 export interface TxtProperties {
     location: string;
     type: string;
-    services?: SensorInfo[];
 }
 
 export interface MdnsService {
@@ -11,6 +10,7 @@ export interface MdnsService {
     port: number;
     mdnsName: string;
     txtProperties: TxtProperties;
+    services?: SensorInfo[];
     isSynced: boolean;
 }
 
@@ -25,5 +25,4 @@ export interface SensorInfo {
     apiService?: string;
     actuatorNode?: string;
     property?: string;
-    sensorNode?: string;
 }

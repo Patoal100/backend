@@ -25,6 +25,7 @@ IOT_API.get('/iot', async (req, res) => {
 
 IOT_API.post('/service/client_services', async (req, res) => {
     const data: IotRequest = req.body;
+    console.log(data);
     // const authHeader = req.headers['authorization'];
     // const token = authHeader;
 
