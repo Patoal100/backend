@@ -10,6 +10,8 @@ const coneccion_bd = new Pool(Configuration.database);
 const readFile = promisify(fs.readFile);
 
 export class IotService {
+
+    private hashIdToPageName: Map<string, string> = new Map();
   
     async transformXmiToJson(filePath: string): Promise<any> {
         try {
@@ -135,6 +137,9 @@ export class IotService {
             last_location: iot.last_location,
             timestamp: ''
         };
+
+        const hashIdToPageName = new Map<string, string>();
+
         for (const service of iot_services) {
             const route = service.txtProperties.location;
             const type = service.txtProperties.type;
@@ -147,7 +152,8 @@ export class IotService {
                 await this.saveHierearchy(route);
                 const computingNodes = entity.entity['containsComputingNode'] || [];
                 for (const node of computingNodes) {
-                    if (node['$'] && node['$'].name === type) {
+                    if (node['$'] && node['$'].name.toLowerCase() === type.toLocaleLowerCase()) {
+                        hashIdToPageName.set(service.hashId, service.txtProperties.pageName);
                         // Insertar en la base de datos
                         const query = {
                             text: `
@@ -183,6 +189,8 @@ export class IotService {
             }
         }
 
+        this.hashIdToPageName = hashIdToPageName;
+
         iotServices.mdns_services = await this.getIotServicesByLocation(iot.last_location);
         return iotServices;
 
@@ -198,6 +206,7 @@ async getIotServicesByLocation(location: string): Promise<MdnsService[]> {
         const result = await coneccion_bd.query(query);
         const mdnsServices: MdnsService[] = await Promise.all(result.rows.map(async (row: any) => {
             const sensorInfo = await this.getSensorInfo(Configuration.model_path, row.type);
+            const pageName = this.hashIdToPageName.get(row.hash_id) || 'Página de Servicios';
             return {
                 hashId: row.hash_id,
                 address: row.address,
@@ -207,6 +216,7 @@ async getIotServicesByLocation(location: string): Promise<MdnsService[]> {
                 txtProperties: {
                     location: row.location,
                     type: row.type,
+                    pageName,
                 },
                 services: sensorInfo,
                 isSynced: true
@@ -231,6 +241,7 @@ async getIotServicesByLocation(location: string): Promise<MdnsService[]> {
             txtProperties: {
                 location: 'Servidor:Servidor',
                 type: 'Servidor',
+                pageName: 'Aplicación Academica'
             },
             services: servicesInfoList,
             isSynced: true

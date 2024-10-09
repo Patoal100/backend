@@ -1,6 +1,7 @@
 export interface TxtProperties {
     location: string;
     type: string;
+    pageName: string;
 }
 
 export interface MdnsService {
@@ -25,4 +26,20 @@ export interface SensorInfo {
     apiService?: string;
     actuatorNode?: string;
     property?: string;
+}
+
+export interface ConditionInfo {
+    type: string;
+    conector?: string;
+    value?: string;
+    belongsProperty?: string;
+    operator?: string;
+    belongsEntity1?: string;
+    belongsEntity2?: string;
+}
+
+
+export interface RuleWithConditions {
+    rule_name: string;
+    conditions: ConditionInfo[];
 }
