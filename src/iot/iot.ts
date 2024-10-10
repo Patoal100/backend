@@ -2,13 +2,25 @@ import { Router } from "express";
 import cors from "cors";
 import { IotService } from "./iot.service";
 import { IotRequest} from "./models.iot";
-// import { LoginService } from "../authentication/login.service";
 import { Configuration } from "../config/parametros";
+import { Server } from 'ws';
 
 const IOT_API = Router();
 const iotService = new IotService();
 // const loginService = new LoginService();
+const wss = new Server({ port: 8080 });
 
+wss.on('connection', (ws) => {
+    console.log('Nuevo cliente conectado');
+
+    ws.on('message', (message) => {
+        console.log('Mensaje recibido:', message);
+    });
+
+    ws.on('close', () => {
+        console.log('Cliente desconectado');
+    });
+});
 
 IOT_API.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -25,7 +37,6 @@ IOT_API.get('/iot', async (req, res) => {
 
 IOT_API.post('/service/client_services', async (req, res) => {
     const data: IotRequest = req.body;
-    console.log(data);
     // const authHeader = req.headers['authorization'];
     // const token = authHeader;
 
@@ -44,6 +55,14 @@ IOT_API.post('/service/client_services', async (req, res) => {
         // }
         const jsonData = await iotService.transformXmiToJson(Configuration.model_path);
         const iot_services = await iotService.getIotServices(jsonData, data);
+
+        wss.clients.forEach(client => {
+            client.send(JSON.stringify({ type: 'update', data: iot_services }));
+            // if (client.readyState === Server.OPEN) {
+            //     client.send(JSON.stringify({ type: 'update', data: iot_services }));
+            // }
+        });
+
         res.status(200).json(iot_services);
     } catch (error) {
         res.status(500).send({ error: error.message });
